@@ -38,6 +38,9 @@ class NavRescueDashboard extends StatefulWidget {
 }
 
 class _NavRescueDashboardState extends State<NavRescueDashboard> {
+  Timer? sensorUiTimer;
+
+  
   AccelerometerEvent? accelerometer;
   GyroscopeEvent? gyroscope;
   MagnetometerEvent? magnetometer;
