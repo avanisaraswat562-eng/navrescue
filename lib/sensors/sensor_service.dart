@@ -28,6 +28,18 @@ class SensorService {
         });
   }
 
+  double get accelerationX => accelerometer?.x ?? 0.0;
+  double get accelerationY => accelerometer?.y ?? 0.0;
+  double get accelerationZ => accelerometer?.z ?? 0.0;
+
+  double get gyroX => gyroscope?.x ?? 0.0;
+  double get gyroY => gyroscope?.y ?? 0.0;
+  double get gyroZ => gyroscope?.z ?? 0.0;
+
+  double get magnetometerX => magnetometer?.x ?? 0.0;
+  double get magnetometerY => magnetometer?.y ?? 0.0;
+  double get magnetometerZ => magnetometer?.z ?? 0.0;
+
   void dispose() {
     accelerometerSubscription?.cancel();
     gyroscopeSubscription?.cancel();
