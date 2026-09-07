@@ -1,8 +1,10 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:geolocator/geolocator.dart';
+
+import 'controllers/navigation_controller.dart';
+import 'sensors/sensor_service.dart';
 
 void main() {
   runApp(const NavRescueApp());
@@ -38,9 +40,17 @@ class NavRescueDashboard extends StatefulWidget {
 }
 
 class _NavRescueDashboardState extends State<NavRescueDashboard> {
+
+  late final SensorService sensorService;
+  late final NavigationController navigationController;
   AccelerometerEvent? accelerometer;
   GyroscopeEvent? gyroscope;
   MagnetometerEvent? magnetometer;
+
+  Timer? sensorUiTimer;
+
+
+
 
   StreamSubscription<AccelerometerEvent>? accelerometerSubscription;
   StreamSubscription<GyroscopeEvent>? gyroscopeSubscription;
@@ -77,26 +87,20 @@ class _NavRescueDashboardState extends State<NavRescueDashboard> {
           return;
         }
 
-        const double earthRadius = 6371000.0;
+        navigationController.updateDeadReckoning(
+          speed: simulatedSpeed,
+          heading: simulatedHeading,
+          deltaTime: 1.0,
+        );
 
-        final distance =
-            simulatedSpeed / 3.6; // metres travelled in 1 second
+        final data = navigationController.currentData;
 
-        final headingRadians =
-            simulatedHeading * 3.141592653589793 / 180.0;
-
-        final deltaLat =
-            (distance * cos(headingRadians)) / earthRadius;
-
-        final deltaLon =
-            (distance * sin(headingRadians)) /
-                (earthRadius *
-                    cos(simulatedLatitude * 3.141592653589793 / 180.0));
-
-        setState(() {
-          simulatedLatitude += deltaLat * 180.0 / 3.141592653589793;
-          simulatedLongitude += deltaLon * 180.0 / 3.141592653589793;
-        });
+        if (data != null) {
+          setState(() {
+            simulatedLatitude = data.latitude;
+            simulatedLongitude = data.longitude;
+          });
+        }
       },
     );
   }
@@ -138,23 +142,27 @@ class _NavRescueDashboardState extends State<NavRescueDashboard> {
   @override
   void initState() {
     super.initState();
+
+    sensorService = SensorService();
+    navigationController = NavigationController(sensorService);
+
     getLocation();
 
-    accelerometerSubscription =
-        accelerometerEventStream().listen((event) {
-          accelerometer = event;
-        });
-    magnetometerEventStream().listen((event) {
-      setState(() {
-        magnetometer = event;
-      });
-    });
+    sensorService.start();
 
-    gyroscopeEventStream().listen((event) {
-      setState(() {
-        gyroscope = event;
-      });
-    });
+    sensorUiTimer = Timer.periodic(
+      const Duration(seconds: 1),
+          (timer) {
+        if (!mounted) return;
+
+        setState(() {
+          accelerometer = sensorService.accelerometer;
+          gyroscope = sensorService.gyroscope;
+          magnetometer = sensorService.magnetometer;
+        });
+      },
+    );
+
     gnssTimer = Timer.periodic(
       const Duration(seconds: 5),
           (timer) {

@@ -14,25 +14,14 @@ class DeadReckoning {
     required double heading,
     required double deltaTime,
   }) {
-    // Speed: km/h → m/s
     final speedMetersPerSecond = speed / 3.6;
+    final distance = speedMetersPerSecond * deltaTime;
 
-    // Distance travelled during this time interval
-    final distance =
-        speedMetersPerSecond * deltaTime;
+    final headingRadians = heading * pi / 180;
 
-    // Convert heading to radians
-    final headingRadians =
-        heading * pi / 180;
+    final northMovement = distance * cos(headingRadians);
+    final eastMovement = distance * sin(headingRadians);
 
-    // Calculate movement
-    final northMovement =
-        distance * cos(headingRadians);
-
-    final eastMovement =
-        distance * sin(headingRadians);
-
-    // Convert metres to latitude/longitude changes
     latitude += northMovement / 111320;
 
     longitude +=
