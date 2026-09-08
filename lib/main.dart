@@ -38,6 +38,9 @@ class NavRescueDashboard extends StatefulWidget {
 }
 
 class _NavRescueDashboardState extends State<NavRescueDashboard> {
+  Timer? sensorUiTimer;
+
+  
   AccelerometerEvent? accelerometer;
   GyroscopeEvent? gyroscope;
   MagnetometerEvent? magnetometer;
@@ -156,22 +159,20 @@ class _NavRescueDashboardState extends State<NavRescueDashboard> {
       });
     });
     gnssTimer = Timer.periodic(
-      const Duration(seconds: 5),
-          (timer) {
-        if (deadReckoningMode) {
-          setState(() {
-            gnssAvailable = false;
-          });
-          return;
-        }
+  const Duration(seconds: 5),
+  (timer) {
+    if (deadReckoningMode) {
+      setState(() {
+        gnssAvailable = false;
+      });
+      return;
+    }
 
-        if (position == null) {
-          setState(() {
-            gnssAvailable = false;
-          });
-        }
-      },
-    );
+    // Keep GNSS available after manual restoration.
+    // Real GNSS updates will replace the simulated position
+    // when a valid Position is received.
+  },
+);
   }
   @override
   Widget build(BuildContext context) {
@@ -447,10 +448,12 @@ class _NavRescueDashboardState extends State<NavRescueDashboard> {
                       icon: Icons.my_location,
                       title: 'POSITION',
                       value: deadReckoningMode
-                          ? '${simulatedLatitude.toStringAsFixed(5)}, ${simulatedLongitude.toStringAsFixed(5)}'
-                          : position != null
-                          ? '${position!.latitude.toStringAsFixed(5)}, ${position!.longitude.toStringAsFixed(5)}'
-                          : 'NO FIX',
+    ? '${simulatedLatitude.toStringAsFixed(5)}, ${simulatedLongitude.toStringAsFixed(5)}'
+    : position != null
+    ? '${position!.latitude.toStringAsFixed(5)}, ${position!.longitude.toStringAsFixed(5)}'
+    : gnssAvailable
+    ? '${simulatedLatitude.toStringAsFixed(5)}, ${simulatedLongitude.toStringAsFixed(5)}'
+    : 'NO FIX',
                       unit: deadReckoningMode ? 'DEAD RECKONING' : 'GNSS',
                     ),
                   ),
